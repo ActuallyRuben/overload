@@ -1,5 +1,7 @@
 use std::ops::{Add, Mul};
-
+use std::fmt::Display;
+use std::collections::VecDeque;
+use std::io::Write;
 use crate::overload;
 
 overload! {
@@ -41,6 +43,25 @@ overload! {
     }
 }
 
+overload! {
+    fn print_all {
+        <W: Write, T: Display>(mut output: W, v: &Vec<T>) -> std::io::Result<()> {
+            for x in v{
+                writeln!(output, "{}", x)?;
+            }
+            Ok(())
+        }
+
+        <W: Write, T: Display>(mut output: W, mut v: VecDeque<T>) -> std::io::Result<()> {
+            while !v.is_empty() {
+                writeln!(output, "{}", v.pop_front().unwrap())?;
+            }
+            Ok(())
+        }
+    }
+}
+
+
 #[test]
 fn addition() {
     assert_eq!(add(6, -7), -1);
@@ -54,4 +75,13 @@ fn addition() {
 fn doubling() {
     assert_eq!(double(5), 10);
     assert_eq!(double("hello", ()), "hellohello");
+}
+
+#[test]
+fn printing() {
+    let mut write_buffer: Vec<u8> = Vec::new();
+    print_all(&mut write_buffer, &vec![1, 2, 3, 4]).unwrap();
+    print_all(&mut write_buffer, VecDeque::from([5, 6, 7, 8])).unwrap();
+    let result = String::from_utf8(write_buffer).unwrap();
+    assert_eq!(result, "1\n2\n3\n4\n5\n6\n7\n8\n");
 }
